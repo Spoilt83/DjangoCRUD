@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.utils import timezone
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm # Crear y autenticar usuarios
 from django.contrib.auth.models import User
 from django.contrib.auth import login, logout, authenticate
@@ -75,6 +76,19 @@ def task_detail(request, task_id):
                 'form': form,
                 'error': 'Bad info, try again.'
             })
+        
+def complete_task(request, task_id):
+    task = get_object_or_404(Task, pk=task_id, user=request.user)
+    if request.method == 'POST':
+        task.date_completed = timezone.now()
+        task.save()
+        return redirect('tasks')
+    
+def delete_task(request, task_id):
+    task = get_object_or_404(Task, pk=task_id, user=request.user)
+    if request.method == 'POST':
+        task.delete()
+        return redirect('tasks')
 
 
 def signout(request):
