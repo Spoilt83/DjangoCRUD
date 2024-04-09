@@ -3,6 +3,7 @@ from django.utils import timezone
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm # Crear y autenticar usuarios
 from django.contrib.auth.models import User
 from django.contrib.auth import login, logout, authenticate
+from django.contrib.auth.decorators import login_required
 from django.db import IntegrityError
 from .forms import TaskForm
 from .models import Task
@@ -36,11 +37,17 @@ def signup(request):
             'error': 'Password do not match.'
         })
 
-
+@login_required
 def tasks(request):
     tasks = Task.objects.filter(user=request.user, date_completed__isnull=True)
     return render(request, 'tasks.html', {'tasks': tasks})
 
+@login_required
+def tasks_completed(request):
+    tasks = Task.objects.filter(user=request.user, date_completed__isnull=False).order_by('-date_completed')    
+    return render(request, 'tasks.html', {'tasks': tasks})
+
+@login_required
 def create_task(request):
     if request.method == 'GET':
         return render(request, 'create_task.html', {
@@ -58,7 +65,8 @@ def create_task(request):
                 'form': TaskForm(),
                 'error': 'Bad data, try again.'
             })
-        
+
+@login_required        
 def task_detail(request, task_id):
     if request.method == 'GET':
         task = get_object_or_404(Task, pk=task_id, user=request.user)
@@ -76,21 +84,23 @@ def task_detail(request, task_id):
                 'form': form,
                 'error': 'Bad info, try again.'
             })
-        
+
+@login_required        
 def complete_task(request, task_id):
     task = get_object_or_404(Task, pk=task_id, user=request.user)
     if request.method == 'POST':
         task.date_completed = timezone.now()
         task.save()
         return redirect('tasks')
-    
+
+@login_required    
 def delete_task(request, task_id):
     task = get_object_or_404(Task, pk=task_id, user=request.user)
     if request.method == 'POST':
         task.delete()
         return redirect('tasks')
 
-
+@login_required
 def signout(request):
     logout(request)
     return redirect('home')
